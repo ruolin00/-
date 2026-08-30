@@ -36,22 +36,27 @@
     font-size:16px;line-height:1.55;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:920px;margin:0 auto;padding:0 14px 80px;}
-  header.top{
-    position:sticky;top:0;z-index:30;background:var(--bg);
-    padding:14px 0 10px;border-bottom:1px solid var(--line);
-  }
-  .brand{font-size:19px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;}
-  .brand small{font-weight:400;color:var(--sub);font-size:13px;margin-left:6px;}
-  nav.tabs{display:flex;gap:8px;margin-top:12px;}
-  nav.tabs button{
-    flex:1;border:1px solid var(--line);background:var(--card);color:var(--sub);
-    padding:10px 6px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;
-    transition:.15s;
-  }
-  nav.tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
-  .page{display:none;margin-top:16px;}
-  .page.active{display:block;}
+.app{display:flex;min-height:100vh;}
+/* sidebar */
+.sidebar{width:216px;flex:none;background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;}
+.sidebar .brand{padding:14px 14px 12px;display:flex;align-items:center;gap:6px;font-size:18px;font-weight:700;letter-spacing:.5px;border-bottom:1px solid var(--line);}
+.sidebar .brand small{font-weight:400;color:var(--sub);font-size:12px;margin-left:3px;}
+.sidebar .nav{flex:1;padding:10px;display:flex;flex-direction:column;gap:4px;overflow:auto;}
+.navitem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:none;background:transparent;color:var(--sub);padding:11px 12px;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;transition:.15s;}
+.navitem .ni{font-size:17px;width:22px;text-align:center;flex:none;}
+.navitem:active{transform:scale(.98);}
+.navitem.active{background:var(--accent);color:#fff;}
+.sidefoot{padding:10px;border-top:1px solid var(--line);}
+.sidefoot #cloudBar{margin-bottom:6px;flex-wrap:wrap;}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+header.topm{position:sticky;top:0;z-index:30;background:var(--bg);padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.hamb{display:none;border:1px solid var(--line);background:var(--card);border-radius:10px;width:38px;height:34px;font-size:18px;cursor:pointer;flex:none;}
+#pageTitle{font-size:17px;font-weight:700;}
+.content{flex:1;overflow:auto;padding:14px;}
+.scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:39;}
+.scrim.show{display:block;}
+.page{display:none;margin:16px auto 0;max-width:920px;}
+.page.active{display:block;}
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px;}
   .card h2{margin:0 0 12px;font-size:17px;display:flex;align-items:center;gap:8px;}
   .card h2 .tag{font-size:12px;font-weight:500;color:var(--sub);margin-left:auto;}
@@ -155,94 +160,121 @@
   .cloudstat.ok{background:#e3f3e8;color:var(--ok);}
   .cloudstat.err{background:#fbe3e3;color:#c0392b;}
   .cloudstat.sync{background:var(--accent-soft);color:var(--accent);}
+  /* recipe images */
+  .recipe .thumbSm{width:46px;height:46px;border-radius:11px;object-fit:cover;flex:none;background:#f0eee9;}
+  .recipe .bigimg{width:100%;border-radius:12px;margin-top:8px;display:block;}
+  .imgprev{margin-top:6px;}
+  .imgprev img{max-width:100%;max-height:170px;border-radius:10px;border:1px solid var(--line);display:block;}
+  .imgprev .rm{font-size:13px;color:var(--accent);cursor:pointer;display:inline-block;margin-top:6px;}
+  /* sidebar responsive: drawer on mobile */
+  @media(max-width:820px){
+    .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s;z-index:40;box-shadow:var(--shadow);}
+    .sidebar.open{transform:translateX(0);}
+    .hamb{display:block;}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div class="brand">超好吃 <small>个人工作台</small>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">超好吃 <small>工作台</small>
       <button class="gear" id="themeBtn" onclick="toggleTheme()" title="切换深色 / 浅色">🌙</button>
-      <button class="gear" onclick="openCloud()" title="云同步设置">⚙</button>
     </div>
-    <nav class="tabs">
-      <button data-tab="home" class="active" onclick="switchTab('home')">首页</button>
-      <button data-tab="recipes" onclick="switchTab('recipes')">菜谱</button>
-      <button data-tab="week" onclick="switchTab('week')">周清单</button>
+    <nav class="nav">
+      <button class="navitem active" data-nav="home" onclick="switchNav('home')"><span class="ni">🏠</span>首页</button>
+      <button class="navitem" data-nav="recipes" onclick="switchNav('recipes')"><span class="ni">🍽️</span>菜谱</button>
+      <button class="navitem" data-nav="week" onclick="switchNav('week')"><span class="ni">🗓️</span>周菜单</button>
+      <button class="navitem" data-nav="shop" onclick="switchNav('shop')"><span class="ni">🛒</span>采购清单</button>
     </nav>
-    <div id="cloudBar">
-      <span id="cloudStat" class="cloudstat">未连接云端</span>
-      <button class="btn sm ghost" onclick="syncNow()" style="padding:5px 10px;margin-left:auto;">立即同步</button>
+    <div class="sidefoot">
+      <div id="cloudBar">
+        <span id="cloudStat" class="cloudstat">未连接云端</span>
+        <button class="btn sm ghost" onclick="syncNow()" style="padding:5px 10px;margin-left:auto;">同步</button>
+      </div>
+      <button class="navitem" onclick="openCloud()"><span class="ni">☁️</span>云端同步</button>
     </div>
-  </header>
+  </aside>
+  <div class="main">
+    <header class="topm">
+      <button class="hamb" onclick="toggleSidebar()">☰</button>
+      <span id="pageTitle">首页</span>
+    </header>
+    <div class="content">
+      <!-- 首页 -->
+      <section id="page-home" class="page active">
+        <div class="card">
+          <h2>🍽️ 今日菜单 <span class="tag" id="todayLabel"></span></h2>
+          <div id="todayList"></div>
+        </div>
+        <div class="card">
+          <h2>🔎 菜谱速查</h2>
+          <input id="homeSearch" placeholder="输入菜名搜索…" oninput="renderHome()">
+          <div id="homeResults" style="margin-top:10px;"></div>
+        </div>
+        <div class="card">
+          <h2>📅 日历概览 <span class="tag">点日期跳去排菜</span></h2>
+          <div class="calnav">
+            <button class="btn sm gray" onclick="calStep(-1)">‹</button>
+            <span id="calTitle" style="font-weight:700;"></span>
+            <button class="btn sm gray" onclick="calStep(1)">›</button>
+            <button class="btn sm ghost" onclick="calToday()" style="margin-left:4px;">今天</button>
+          </div>
+          <div class="calgrid" id="calendar"></div>
+          <div class="weeknav" style="display:flex;align-items:center;gap:8px;margin-top:14px;">
+            <button class="btn sm gray" onclick="homeWeekStep(-1)">‹ 上周</button>
+            <span id="homeWeekLabel" style="font-weight:700;flex:1;text-align:center;"></span>
+            <button class="btn sm gray" onclick="homeWeekStep(1)">下周 ›</button>
+          </div>
+          <div class="ovgrid" id="overview" style="margin-top:10px;"></div>
+        </div>
+      </section>
 
-  <!-- 首页 -->
-  <section id="page-home" class="page active">
-    <div class="card">
-      <h2>🍽️ 今日菜单 <span class="tag" id="todayLabel"></span></h2>
-      <div id="todayList"></div>
-    </div>
-    <div class="card">
-      <h2>🔎 菜谱速查</h2>
-      <input id="homeSearch" placeholder="输入菜名搜索…" oninput="renderHome()">
-      <div id="homeResults" style="margin-top:10px;"></div>
-    </div>
-    <div class="card">
-      <h2>📅 日历概览 <span class="tag">点日期跳去排菜</span></h2>
-      <div class="calnav">
-        <button class="btn sm gray" onclick="calStep(-1)">‹</button>
-        <span id="calTitle" style="font-weight:700;"></span>
-        <button class="btn sm gray" onclick="calStep(1)">›</button>
-        <button class="btn sm ghost" onclick="calToday()" style="margin-left:4px;">今天</button>
-      </div>
-      <div class="calgrid" id="calendar"></div>
-      <div class="weeknav" style="display:flex;align-items:center;gap:8px;margin-top:14px;">
-        <button class="btn sm gray" onclick="homeWeekStep(-1)">‹ 上周</button>
-        <span id="homeWeekLabel" style="font-weight:700;flex:1;text-align:center;"></span>
-        <button class="btn sm gray" onclick="homeWeekStep(1)">下周 ›</button>
-      </div>
-      <div class="ovgrid" id="overview" style="margin-top:10px;"></div>
-    </div>
-  </section>
+      <!-- 菜谱 -->
+      <section id="page-recipes" class="page">
+        <div class="searchbar">
+          <div class="row" style="align-items:center;">
+            <input id="recipeSearch" placeholder="搜索菜名 / 食材 / 做法…" oninput="renderRecipes()" style="flex:1;">
+            <button class="btn sm gray" id="favFilterBtn" onclick="toggleOnlyFav()">☆ 收藏</button>
+            <button class="btn sm" onclick="openForm()">+ 加菜</button>
+          </div>
+        </div>
+        <div id="recipeList"></div>
+      </section>
 
-  <!-- 菜谱 -->
-  <section id="page-recipes" class="page">
-    <div class="searchbar">
-      <div class="row" style="align-items:center;">
-        <input id="recipeSearch" placeholder="搜索菜名 / 食材 / 做法…" oninput="renderRecipes()" style="flex:1;">
-        <button class="btn sm gray" id="favFilterBtn" onclick="toggleOnlyFav()">☆ 收藏</button>
-        <button class="btn sm" onclick="openForm()">+ 加菜</button>
-      </div>
-    </div>
-    <div id="recipeList"></div>
-  </section>
+      <!-- 周菜单 -->
+      <section id="page-week" class="page">
+        <div class="card">
+          <h2>🗓️ 一周菜单安排 <span class="tag">从菜谱里挑菜排进去</span></h2>
+          <div class="weeknav" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <button class="btn sm gray" onclick="weekStep(-1)">‹ 上周</button>
+            <span id="weekLabel" style="font-weight:700;"></span>
+            <button class="btn sm gray" onclick="weekStep(1)">下周 ›</button>
+            <button class="btn sm ghost" onclick="weekJump(0)">本周</button>
+            <button class="btn sm ghost" onclick="weekJump(1)">下周</button>
+            <button class="btn sm ghost" onclick="weekJump(2)">下下周</button>
+          </div>
+          <div id="weekPlan"></div>
+        </div>
+      </section>
 
-  <!-- 周清单 -->
-  <section id="page-week" class="page">
-    <div class="card">
-      <h2>🗓️ 一周菜单安排 <span class="tag">从菜谱里挑菜排进去</span></h2>
-      <div class="weeknav" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-        <button class="btn sm gray" onclick="weekStep(-1)">‹ 上周</button>
-        <span id="weekLabel" style="font-weight:700;"></span>
-        <button class="btn sm gray" onclick="weekStep(1)">下周 ›</button>
-        <button class="btn sm ghost" onclick="weekJump(0)">本周</button>
-        <button class="btn sm ghost" onclick="weekJump(1)">下周</button>
-        <button class="btn sm ghost" onclick="weekJump(2)">下下周</button>
-      </div>
-      <div id="weekPlan"></div>
+      <!-- 采购清单 -->
+      <section id="page-shop" class="page">
+        <div class="card">
+          <h2>🛒 买菜采购清单 <span class="tag" id="shopWeekTag">自动汇总 + 手动增删</span></h2>
+          <div class="row" style="margin-bottom:10px;">
+            <button class="btn sm ghost" onclick="regenShopping()">↻ 据周菜单生成</button>
+          </div>
+          <div class="addline" style="margin-bottom:8px;">
+            <input id="shopInput" placeholder="手动添加要买的…">
+            <button class="btn sm" onclick="addShopManual()">添加</button>
+          </div>
+          <div id="shopList"></div>
+        </div>
+      </section>
     </div>
-    <div class="card">
-      <h2>🛒 买菜采购清单 <span class="tag" id="shopWeekTag">自动汇总 + 手动增删</span></h2>
-      <div class="row" style="margin-bottom:10px;">
-        <button class="btn sm ghost" onclick="regenShopping()">↻ 据周菜单生成</button>
-      </div>
-      <div class="addline" style="margin-bottom:8px;">
-        <input id="shopInput" placeholder="手动添加要买的…">
-        <button class="btn sm" onclick="addShopManual()">添加</button>
-      </div>
-      <div id="shopList"></div>
-    </div>
-  </section>
+  </div>
 </div>
+<div class="scrim" id="scrim" onclick="toggleSidebar()"></div>
 
 <!-- 菜谱表单弹窗 -->
 <div class="mask" id="mask" onclick="if(event.target===this)closeForm()">
@@ -272,6 +304,9 @@
         <input id="f_cal" placeholder="如 220" inputmode="numeric">
       </div>
     </div>
+    <label class="fld">菜品图片</label>
+    <input id="f_img" type="file" accept="image/*" onchange="onImgPick(this)">
+    <div class="imgprev" id="imgPrev"></div>
     <div class="row" style="margin-top:16px;justify-content:flex-end;">
       <button class="btn gray" onclick="closeForm()">取消</button>
       <button class="btn" onclick="saveRecipe()">保存</button>
@@ -391,13 +426,21 @@ function getWeekShop(ws){if(!state.shop[ws])state.shop[ws]=[];return state.shop[
 function wkLabel(ws){const wd=weekDatesOf(ws);const tag=ws===weekStartStr()?"（本周）":ws===addDays(weekStartStr(),7)?"（下周）":ws===addDays(weekStartStr(),14)?"（下下周）":"";return wd[0].slice(5)+" ~ "+wd[6].slice(5)+tag;}
 
 /* 切换页 */
-function switchTab(t){
-  document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===t));
+function switchNav(t){
+  document.querySelectorAll(".navitem[data-nav]").forEach(b=>b.classList.toggle("active",b.dataset.nav===t));
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  $("page-"+t).classList.add("active");
+  const pg=$("page-"+t);if(pg)pg.classList.add("active");
+  const ttl=$("pageTitle");if(ttl)ttl.textContent={home:"首页",recipes:"菜谱",week:"周菜单",shop:"采购清单"}[t]||"";
   if(t==="home")renderHome();
   if(t==="recipes")renderRecipes();
   if(t==="week")renderWeek();
+  if(t==="shop")renderShop();
+  if(window.innerWidth<=820)toggleSidebar(false);
+}
+function toggleSidebar(force){
+  const s=$("sidebar"),sc=$("scrim");if(!s)return;
+  const open=force===undefined?!s.classList.contains("open"):force;
+  s.classList.toggle("open",open);if(sc)sc.classList.toggle("show",open);
 }
 
 /* ===== 首页 ===== */
@@ -453,7 +496,7 @@ function renderHome(){
     cell.className="ovcell"+(i===curWi?" today":"");
     cell.innerHTML='<div class="od">'+DAYS[i]+'</div><div class="oc">'+cnt+'道</div>'+
       (cnt?'<div class="op">✓'+doneCnt+'</div>':'');
-    cell.onclick=()=>{viewWeek=homeWeek;switchTab("week");};
+    cell.onclick=()=>{viewWeek=homeWeek;switchNav("week");};
     cell.style.cursor="pointer";
     ov.appendChild(cell);
   });
@@ -479,7 +522,7 @@ function renderCalendar(){
     cell.className="cd"+(ds2===tds?" today":"")+(d.getMonth()!==calM?" out":"");
     const planned=(state.weeks[weekStartStr(ds2)]||[]).reduce((a,arr)=>a+(arr?arr.length:0),0);
     cell.innerHTML='<div class="n">'+d.getDate()+'</div>'+(planned?'<div class="dot"></div>':'');
-    cell.onclick=()=>{viewWeek=weekStartStr(ds2);switchTab("week");};
+    cell.onclick=()=>{viewWeek=weekStartStr(ds2);switchNav("week");};
     grid.appendChild(cell);
   }
 }
@@ -505,6 +548,7 @@ function renderRecipes(){
     const c=document.createElement("div");c.className="recipe"+(open?" open":"");
     c.innerHTML=
       '<div class="rh" onclick="toggleRecipe(\''+r.id+'\')">'+
+        (r.img?'<img class="thumbSm" src="'+r.img+'">':'')+
         '<div style="flex:1;min-width:0">'+
           '<div class="name">'+esc(r.name)+'</div>'+
           '<div class="meta">'+
@@ -521,6 +565,7 @@ function renderRecipes(){
         '<div style="margin-top:10px">'+
         (r.ing?'<div class="sec">食材</div><div class="body">'+esc(r.ing)+'</div>':'')+
         (r.steps?'<div class="sec">做法</div><div class="body">'+esc(r.steps)+'</div>':'')+
+        (r.img?'<img class="bigimg" src="'+r.img+'">':'')+
         '<div class="acts"><button class="btn sm line" onclick="openForm(\''+r.id+'\')">编辑</button>'+
         '<button class="btn sm gray" onclick="delRecipe(\''+r.id+'\')">删除</button></div>'+
         '</div>'
@@ -529,7 +574,7 @@ function renderRecipes(){
   });
 }
 function toggleRecipe(id){if(openRecipes.has(id))openRecipes.delete(id);else openRecipes.add(id);renderRecipes();}
-function jumpToRecipe(id){switchTab("recipes");$("recipeSearch").value="";openRecipes.add(id);renderRecipes();}
+function jumpToRecipe(id){switchNav("recipes");$("recipeSearch").value="";openRecipes.add(id);renderRecipes();}
 function openForm(id){
   editingId=id||null;
   $("formTitle").textContent=id?"编辑菜品":"加一道菜";
@@ -540,20 +585,25 @@ function openForm(id){
   $("f_time").value=r?r.time:"";
   $("f_diff").value=r?(r.diff||"简单"):"简单";
   $("f_cal").value=r?r.cal:"";
+  _imgData=null;_imgRemove=false;showImgPrev();
   $("mask").classList.add("show");
   setTimeout(()=>$("f_name").focus(),50);
 }
 function closeForm(){$("mask").classList.remove("show");editingId=null;}
-function saveRecipe(){
+async function saveRecipe(){
   const name=$("f_name").value.trim();
   if(!name){toast("菜名不能为空");return;}
+  let img=editingId?((recipeById(editingId)||{}).img||""):"";
+  if(_imgRemove)img="";
+  else if(_imgData)img=_imgData;
   const data={
     name:name,
     ing:$("f_ing").value.trim(),
     steps:$("f_steps").value.trim(),
     time:$("f_time").value.trim(),
     diff:$("f_diff").value,
-    cal:$("f_cal").value.trim()
+    cal:$("f_cal").value.trim(),
+    img:img
   };
   if(editingId){
     const r=recipeById(editingId);Object.assign(r,data);
@@ -570,6 +620,34 @@ function delRecipe(id){
   if(!state.deleted.includes(id))state.deleted.push(id);
   save();renderRecipes();renderWeek();renderHome();
   toast("已删除");
+}
+/* 图片：选图→压缩→预览 */
+let _imgData=null,_imgRemove=false;
+function onImgPick(input){
+  const f=input.files&&input.files[0];
+  if(!f)return;
+  compressImage(f,1000,0.82).then(d=>{_imgData=d;_imgRemove=false;showImgPrev();})
+    .catch(()=>toast("图片读取失败"));
+}
+function showImgPrev(){
+  const box=$("imgPrev");if(!box)return;
+  if(_imgRemove){box.innerHTML="";return;}
+  const cur=editingId?(recipeById(editingId)||{}).img:"";
+  const src=_imgData||cur;
+  box.innerHTML=src?'<img src="'+src+'"><div class="rm" onclick="removeImg()">移除图片</div>':"";
+}
+function removeImg(){_imgData=null;_imgRemove=true;const i=$("f_img");if(i)i.value="";showImgPrev();}
+function compressImage(file,maxW,q){
+  return new Promise((res,rej)=>{
+    const rd=new FileReader();
+    rd.onload=()=>{const im=new Image();im.onload=()=>{
+      let w=im.width,h=im.height;if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+      const c=document.createElement("canvas");c.width=w;c.height=h;
+      c.getContext("2d").drawImage(im,0,0,w,h);
+      try{res(c.toDataURL("image/jpeg",q));}catch(e){rej(e);}
+    };im.onerror=rej;im.src=rd.result;};
+    rd.onerror=rej;rd.readAsDataURL(file);
+  });
 }
 let onlyFav=false;
 function toggleFav(id){const r=recipeById(id);if(!r)return;r.fav=!r.fav;save();renderRecipes();}
@@ -728,11 +806,12 @@ function applyCloudData(obj){
   renderAll();
 }
 function renderAll(){
-  const t=document.querySelector("nav.tabs button.active");
-  const tab=t?t.dataset.tab:"home";
+  const t=document.querySelector(".navitem.active");
+  const tab=t?t.dataset.nav:"home";
   if(tab==="home")renderHome();
   else if(tab==="recipes")renderRecipes();
-  else renderWeek();
+  else if(tab==="week")renderWeek();
+  else renderShop();
 }
 async function syncNow(){
   if(!cloudReady()){openCloud();return;}
