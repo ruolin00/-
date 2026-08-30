@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>超好吃 · 个人工作台</title>
+<style>
+  :root{
+    --bg:#f6f5f2;
+    --card:#ffffff;
+    --ink:#2d2a26;
+    --sub:#8a837a;
+    --line:#ece9e3;
+    --accent:#e8743b;
+    --accent-soft:#fbe9dd;
+    --ok:#3f9d5a;
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink);
+    font-size:16px;line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 14px 80px;}
+  header.top{
+    position:sticky;top:0;z-index:30;background:var(--bg);
+    padding:14px 0 10px;border-bottom:1px solid var(--line);
+  }
+  .brand{font-size:19px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;}
+  .brand small{font-weight:400;color:var(--sub);font-size:13px;margin-left:6px;}
+  nav.tabs{display:flex;gap:8px;margin-top:12px;}
+  nav.tabs button{
+    flex:1;border:1px solid var(--line);background:var(--card);color:var(--sub);
+    padding:10px 6px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;
+    transition:.15s;
+  }
+  nav.tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .page{display:none;margin-top:16px;}
+  .page.active{display:block;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px;}
+  .card h2{margin:0 0 12px;font-size:17px;display:flex;align-items:center;gap:8px;}
+  .card h2 .tag{font-size:12px;font-weight:500;color:var(--sub);margin-left:auto;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .muted{color:var(--sub);font-size:14px;}
+  .empty{color:var(--sub);font-size:14px;padding:14px 4px;text-align:center;}
+  /* buttons */
+  .btn{border:none;border-radius:11px;padding:10px 16px;font-size:15px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;transition:.15s;}
+  .btn:active{transform:scale(.97);}
+  .btn.ghost{background:var(--accent-soft);color:var(--accent);}
+  .btn.line{background:transparent;color:var(--accent);border:1px solid var(--accent);}
+  .btn.sm{padding:7px 12px;font-size:14px;border-radius:9px;}
+  .btn.gray{background:#eee;color:#555;}
+  input,textarea,select{
+    width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 12px;
+    font-size:15px;font-family:inherit;background:#fcfbfa;color:var(--ink);outline:none;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--accent);background:#fff;}
+  textarea{resize:vertical;min-height:70px;}
+  label.fld{display:block;font-size:13px;color:var(--sub);margin:12px 0 5px;font-weight:600;}
+  /* recipe list */
+  .recipe{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff;}
+  #recipeList{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:start;}
+  .recipe.open{grid-column:1 / -1;}
+  #recipeList>.empty{grid-column:1 / -1;}
+  @media(max-width:380px){#recipeList{grid-template-columns:1fr;}}
+  .recipe .name{font-size:17px;font-weight:700;}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+  .chip{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 11px;font-size:13px;font-weight:600;}
+  .chip.plain{background:#f0eee9;color:var(--sub);}
+  .recipe .sec{font-size:13px;color:var(--sub);font-weight:700;margin:10px 0 3px;}
+  .recipe .body{font-size:14.5px;white-space:pre-wrap;word-break:break-word;}
+  .recipe .acts{display:flex;gap:8px;margin-top:12px;}
+  .recipe .rh{display:flex;align-items:center;gap:10px;cursor:pointer;}
+  .recipe .rh .name{flex:1;font-size:17px;font-weight:700;}
+  .recipe .chev{color:var(--sub);font-size:18px;flex:none;}
+  .recipe .sum{font-size:12.5px;color:var(--sub);margin-top:5px;}
+  /* week */
+  .day{border:1px solid var(--line);border-radius:14px;padding:13px;background:#fff;margin-bottom:12px;}
+  .day .dh{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .day .dh .dname{font-weight:700;font-size:16px;}
+  .day .dh .dnum{font-size:13px;color:var(--sub);}
+  .day .dh.today{background:var(--accent-soft);margin:-13px -13px 8px;padding:13px;border-radius:14px 14px 0 0;}
+  .dish{display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:7px;}
+  .dish .dn{flex:1;font-size:15px;}
+  .dish.done .dn{text-decoration:line-through;color:var(--sub);}
+  .dish .x{color:var(--sub);cursor:pointer;font-size:18px;line-height:1;padding:0 4px;}
+  .addline{display:flex;gap:8px;margin-top:6px;}
+  .addline select{flex:1;}
+  /* shopping */
+  .shop{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line);}
+  .shop:last-child{border-bottom:none;}
+  .shop .cb{width:20px;height:20px;flex:none;border-radius:6px;border:2px solid var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;}
+  .shop.done .cb{background:var(--accent);}
+  .shop.done .txt{text-decoration:line-through;color:var(--sub);}
+  .shop .txt{flex:1;font-size:15px;}
+  .shop .auto{font-size:11px;color:var(--sub);background:#f0eee9;border-radius:6px;padding:1px 6px;}
+  .shop .x{color:var(--sub);cursor:pointer;font-size:17px;padding:0 4px;}
+  /* modal */
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none;align-items:flex-start;justify-content:center;padding:24px 14px;overflow:auto;}
+  .mask.show{display:flex;}
+  .modal{background:#fff;border-radius:18px;width:100%;max-width:520px;padding:18px;box-shadow:var(--shadow);}
+  .modal h3{margin:0 0 6px;font-size:18px;}
+  /* home overview */
+  .ovgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;}
+  .ovcell{border:1px solid var(--line);border-radius:11px;padding:9px 6px;text-align:center;background:#fff;}
+  .ovcell.today{background:var(--accent-soft);border-color:var(--accent);}
+  .ovcell .od{font-size:12px;color:var(--sub);}
+  .ovcell .oc{font-size:14px;font-weight:700;margin-top:3px;}
+  .ovcell .op{font-size:11px;color:var(--ok);margin-top:2px;}
+  .searchbar{position:sticky;top:0;background:var(--card);z-index:5;padding:4px 0 10px;}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#2d2a26;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:90;}
+  .toast.show{opacity:1;}
+  @media(max-width:560px){
+    .ovgrid{grid-template-columns:repeat(7,1fr);gap:4px;}
+    .ovcell{padding:7px 2px;}
+    .ovcell .od{font-size:10px;}
+    .ovcell .oc{font-size:12px;}
+  }
+  .calnav{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:10px;}
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .calgrid .ch{text-align:center;font-size:11px;color:var(--sub);padding:2px 0;}
+  .calgrid .cd{border:1px solid var(--line);border-radius:9px;min-height:44px;padding:4px;font-size:13px;cursor:pointer;background:#fff;position:relative;}
+  .calgrid .cd.today{background:var(--accent-soft);border-color:var(--accent);}
+  .calgrid .cd.out{color:#ccc;background:#fafafa;}
+  .calgrid .cd .n{font-weight:600;}
+  .calgrid .cd .dot{position:absolute;right:5px;bottom:4px;width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  .weeknav .btn.sm{padding:6px 10px;}
+  /* cloud sync */
+  .gear{margin-left:auto;border:1px solid var(--line);background:var(--card);color:var(--sub);width:38px;height:34px;border-radius:10px;font-size:17px;cursor:pointer;flex:none;}
+  .gear:active{transform:scale(.95);}
+  #cloudBar{margin-top:10px;display:flex;align-items:center;gap:8px;}
+  .cloudstat{font-size:12px;font-weight:600;padding:3px 11px;border-radius:999px;background:#f0eee9;color:var(--sub);}
+  .cloudstat.ok{background:#e3f3e8;color:var(--ok);}
+  .cloudstat.err{background:#fbe3e3;color:#c0392b;}
+  .cloudstat.sync{background:var(--accent-soft);color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">超好吃 <small>个人工作台</small>
+      <button class="gear" onclick="openCloud()" title="云同步设置">⚙</button>
+    </div>
+    <nav class="tabs">
+      <button data-tab="home" class="active" onclick="switchTab('home')">首页</button>
+      <button data-tab="recipes" onclick="switchTab('recipes')">菜谱</button>
+      <button data-tab="week" onclick="switchTab('week')">周清单</button>
+    </nav>
+    <div id="cloudBar">
+      <span id="cloudStat" class="cloudstat">未连接云端</span>
+      <button class="btn sm ghost" onclick="syncNow()" style="padding:5px 10px;margin-left:auto;">立即同步</button>
+    </div>
+  </header>
+
+  <!-- 首页 -->
+  <section id="page-home" class="page active">
+    <div class="card">
+      <h2>🍽️ 今日菜单 <span class="tag" id="todayLabel"></span></h2>
+      <div id="todayList"></div>
+    </div>
+    <div class="card">
+      <h2>🔎 菜谱速查</h2>
+      <input id="homeSearch" placeholder="输入菜名搜索…" oninput="renderHome()">
+      <div id="homeResults" style="margin-top:10px;"></div>
+    </div>
+    <div class="card">
+      <h2>📅 日历概览 <span class="tag">点日期跳去排菜</span></h2>
+      <div class="calnav">
+        <button class="btn sm gray" onclick="calStep(-1)">‹</button>
+        <span id="calTitle" style="font-weight:700;"></span>
+        <button class="btn sm gray" onclick="calStep(1)">›</button>
+        <button class="btn sm ghost" onclick="calToday()" style="margin-left:4px;">今天</button>
+      </div>
+      <div class="calgrid" id="calendar"></div>
+      <div class="weeknav" style="display:flex;align-items:center;gap:8px;margin-top:14px;">
+        <button class="btn sm gray" onclick="homeWeekStep(-1)">‹ 上周</button>
+        <span id="homeWeekLabel" style="font-weight:700;flex:1;text-align:center;"></span>
+        <button class="btn sm gray" onclick="homeWeekStep(1)">下周 ›</button>
+      </div>
+      <div class="ovgrid" id="overview" style="margin-top:10px;"></div>
+    </div>
+  </section>
+
+  <!-- 菜谱 -->
+  <section id="page-recipes" class="page">
+    <div class="searchbar">
+      <div class="row" style="align-items:center;">
+        <input id="recipeSearch" placeholder="搜索菜谱…" oninput="renderRecipes()" style="flex:1;">
+        <button class="btn sm" onclick="openForm()">+ 加菜</button>
+      </div>
+    </div>
+    <div id="recipeList"></div>
+  </section>
+
+  <!-- 周清单 -->
+  <section id="page-week" class="page">
+    <div class="card">
+      <h2>🗓️ 一周菜单安排 <span class="tag">从菜谱里挑菜排进去</span></h2>
+      <div class="weeknav" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="btn sm gray" onclick="weekStep(-1)">‹ 上周</button>
+        <span id="weekLabel" style="font-weight:700;"></span>
+        <button class="btn sm gray" onclick="weekStep(1)">下周 ›</button>
+        <button class="btn sm ghost" onclick="weekJump(0)">本周</button>
+        <button class="btn sm ghost" onclick="weekJump(1)">下周</button>
+        <button class="btn sm ghost" onclick="weekJump(2)">下下周</button>
+      </div>
+      <div id="weekPlan"></div>
+    </div>
+    <div class="card">
+      <h2>🛒 买菜采购清单 <span class="tag" id="shopWeekTag">自动汇总 + 手动增删</span></h2>
+      <div class="row" style="margin-bottom:10px;">
+        <button class="btn sm ghost" onclick="regenShopping()">↻ 据周菜单生成</button>
+      </div>
+      <div class="addline" style="margin-bottom:8px;">
+        <input id="shopInput" placeholder="手动添加要买的…">
+        <button class="btn sm" onclick="addShopManual()">添加</button>
+      </div>
+      <div id="shopList"></div>
+    </div>
+  </section>
+</div>
+
+<!-- 菜谱表单弹窗 -->
+<div class="mask" id="mask" onclick="if(event.target===this)closeForm()">
+  <div class="modal">
+    <h3 id="formTitle">加一道菜</h3>
+    <label class="fld">菜名 *</label>
+    <input id="f_name" placeholder="如：番茄炒蛋">
+    <label class="fld">食材清单（每行一种）</label>
+    <textarea id="f_ing" placeholder="番茄 2个&#10;鸡蛋 3个&#10;盐 少许"></textarea>
+    <label class="fld">做法步骤</label>
+    <textarea id="f_steps" placeholder="1. 鸡蛋打散…&#10;2. 番茄切块…"></textarea>
+    <div class="row">
+      <div style="flex:1">
+        <label class="fld">用时</label>
+        <input id="f_time" placeholder="如 15分钟">
+      </div>
+      <div style="flex:1">
+        <label class="fld">难度</label>
+        <select id="f_diff">
+          <option value="简单">简单</option>
+          <option value="普通">普通</option>
+          <option value="较难">较难</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <label class="fld">热量(kcal)</label>
+        <input id="f_cal" placeholder="如 220" inputmode="numeric">
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px;justify-content:flex-end;">
+      <button class="btn gray" onclick="closeForm()">取消</button>
+      <button class="btn" onclick="saveRecipe()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 云同步设置弹窗 -->
+<div class="mask" id="cloudMask" onclick="if(event.target===this)closeCloud()">
+  <div class="modal">
+    <h3>☁️ 云同步设置（GitHub）</h3>
+    <p class="muted" style="font-size:13px;margin:0 0 12px;line-height:1.5;">数据存到 GitHub 仓库，手机 / 电脑 / 分享链接三端实时互通、自动更新。需要：一个仓库（公开或私有均可）+ 一个只含该仓库权限的 Token。</p>
+    <label class="fld">仓库 owner / repo</label>
+    <input id="c_repo" placeholder="例如：yourname/chaochihao-data">
+    <div class="row">
+      <div style="flex:1">
+        <label class="fld">分支</label>
+        <input id="c_branch" placeholder="main">
+      </div>
+      <div style="flex:1">
+        <label class="fld">文件路径</label>
+        <input id="c_path" placeholder="data.json">
+      </div>
+    </div>
+    <label class="fld">GitHub Token（仅存本机浏览器，不上传）</label>
+    <input id="c_token" type="password" placeholder="ghp_... 或 fine-grained token">
+    <p class="muted" style="font-size:12px;margin:8px 0 0;">建议用 Fine-grained token，仅勾选该仓库的 Contents 读写权限。</p>
+    <div class="row" style="margin-top:16px;justify-content:flex-end;">
+      <button class="btn gray" onclick="closeCloud()">取消</button>
+      <button class="btn" onclick="saveCloud()">保存并连接</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const KEY="chaochihao_workbench_v1";
+const DAYS=["周一","周二","周三","周四","周五","周六","周日"];
+let state={recipes:[],weeks:{},shop:{},checkins:{},deleted:[]};
+let editingId=null;
+let openRecipes=new Set();
+// 首次打开时自动写入的真实菜谱
+const SEED_RECIPES=[
+  {id:"r_seed_1",name:"芝麻千层馒头",
+   ing:"面团：\n中筋面粉 500g\n温水 250g\n酵母 4.5g\n猪油或椰子油 15g\n白砂糖 20g\n奶粉 10g\n\n芝麻馅：\n熟芝麻打粉 60g\n牛奶 20g\n炼乳 适量\n白糖 适量\n黄油 15g",
+   steps:"1. 酵母先用温水化开，倒进面粉里用筷子搅成絮状。\n2. 揉成团，盖保鲜膜密封醒发15分钟。\n3. 醒好后排气揉面，用搓衣服的手法反复揉。\n4. 揉到表面光滑。\n5. 擀薄，擀成长方形面片。\n6. 中间薄薄铺一层芝麻馅。\n7. 左边面皮折过来盖住中间的馅，在露出的面皮上再铺一层芝麻馅。\n8. 右边面皮盖过来，三处封口都要捏紧。\n9. 再次擀薄，擀到最薄（关键步骤）。\n10. 再重复之前的操作：铺一层芝麻馅后再擀薄。\n11. 从左侧的位置一点点卷起来（按图10的方位）。\n12. 用刀切成4.9cm宽的小剂子。\n13. 放进40度温水里醒发到1.5倍大，水开后蒸15分钟，关火焖3分钟出锅。",
+   time:"约90分钟",diff:"普通",cal:""},
+  {id:"r_seed_2",name:"番茄肉酱意面",
+   ing:"肉末 150g\n蒜末 适量\n洋葱碎 适量\n生抽 2勺\n老抽 半勺\n蚝油 1勺\n番茄酱 2勺\n盐 少许\n糖 少许\n鸡精 少许\n番茄 切块（适量）\n意面 适量\n清水 一碗",
+   steps:"1. 备料：肉末150g、蒜末、洋葱碎备好；调一碗灵魂碗汁：2勺生抽+半勺老抽+1勺蚝油+2勺番茄酱+少许盐+少许糖+少许鸡精，搅匀备用。\n2. 炒肉末：热油下肉末炒至变色，倒入洋葱碎和蒜末爆香。\n3. 熬肉酱：倒入碗汁和切块番茄翻炒均匀，加一碗清水，小火慢煮20分钟至浓稠。\n4. 煮意面：水开下意面，煮到喜欢的软硬度，捞出沥干。\n5. 拌一拌：意面倒进肉酱锅翻拌均匀，裹满肉酱即可装盘。",
+   time:"约30分钟",diff:"简单",cal:""},
+  {id:"r_seed_3",name:"田村浩二焦糖布丁",
+   ing:"【焦糖液】\n白砂糖 55g\n清水 20g\n热水 20g\n\n【布丁液】（6个110ml模具）\n大号鸡蛋 4个\n奶油奶酪 100g\n白砂糖 15g\n炼乳 33g\n淡奶油 100g\n牛奶 170g\n香草籽 适量",
+   steps:"1. 锅中放入糖和水，小火熬至深褐色关火（全程不要搅拌），倒入热水搅拌均匀，趁热倒入模具，冰箱冷藏备用。\n2. 四个鸡蛋打散备用。\n3. 奶油奶酪加炼乳隔热水软化充分后，蛋液分2-3次加入搅匀备用。\n4. 锅中倒入牛奶、淡奶油、糖和香草籽，小火煮至约60度。\n5. 将温奶液边倒边搅拌地倒入蛋黄奶酪液中。\n6. 过筛3-4次，均分到模具，盖锡纸（此模具无需涂黄油）。\n7. 模具放进更大一号的烤盘，注入与布丁液温度、高度相近的热水（水浴法）。\n8. 烤箱预热140度，中层水浴烤约50分钟（温度偏高可下调3-5度）。\n\n💡 小贴士：布丁液要趁热入烤箱，放凉后再烤容易出气孔。",
+   time:"约2小时（含冷藏）",diff:"较难",cal:""}
+];
+
+function load(){
+  const raw=localStorage.getItem(KEY);
+  state.weeks=state.weeks||{};state.shop=state.shop||{};
+  if(raw!==null){
+    try{const s=JSON.parse(raw);if(s&&typeof s==="object"){
+      state.recipes=s.recipes||[];
+      state.checkins=s.checkins||{};
+      state.deleted=Array.isArray(s.deleted)?s.deleted:[];
+      state.weeks=(s.weeks&&typeof s.weeks==="object")?s.weeks:{};
+      state.shop=(s.shop&&typeof s.shop==="object")?s.shop:{};
+      // 迁移旧版（仅存本周）数据
+      if(Array.isArray(s.week)&&s.week.length===7&&!Object.keys(state.weeks).length){
+        state.weeks[weekStartStr()]=s.week;
+      }
+      if(Array.isArray(s.shopping)&&!Object.keys(state.shop).length){
+        state.shop[weekStartStr()]=s.shopping;
+      }
+    }}catch(e){}
+  }
+  // 合并种子：未删除的自动加入；已存在但新版本更完整（如步骤从空变非空）则升级
+  let changed=false;
+  SEED_RECIPES.forEach(s=>{
+    if(state.deleted.includes(s.id))return;
+    const existing=state.recipes.find(r=>r.id===s.id);
+    if(!existing){
+      state.recipes.unshift({...s});changed=true;
+    }else if(s.steps && !existing.steps){
+      Object.assign(existing,s);changed=true;
+    }
+  });
+  if(changed)saveLocal();
+}
+function saveLocal(){localStorage.setItem(KEY,JSON.stringify(state));}
+function save(){
+  saveLocal();
+  cloudPushDebounced();
+}
+
+function $(id){return document.getElementById(id);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1600);}
+
+/* 日期工具 */
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
+function weekdayIdx(){return (new Date().getDay()+6)%7;} // 周一=0
+function weekDates(){const base=new Date();base.setDate(base.getDate()-weekdayIdx());const arr=[];for(let i=0;i<7;i++){const d=new Date(base);d.setDate(base.getDate()+i);arr.push(d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate());}return arr;}
+function recipeById(id){return state.recipes.find(r=>r.id===id);}
+let viewWeek="",homeWeek="",calY=0,calM=0;
+function pad(n){return n<10?"0"+n:n;}
+function ds(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function mondayOf(dateStr){const p=(""+dateStr).split("-").map(Number);const x=new Date(p[0],p[1]-1,p[2]);x.setDate(x.getDate()-((x.getDay()+6)%7));x.setHours(0,0,0,0);return x;}
+function weekStartStr(dateStr){return ds(mondayOf(dateStr||ds(new Date())));}
+function addDays(dateStr,n){const p=(""+dateStr).split("-").map(Number);const x=new Date(p[0],p[1]-1,p[2]);x.setDate(x.getDate()+n);return ds(x);}
+function weekDatesOf(ws){const arr=[];for(let i=0;i<7;i++)arr.push(addDays(ws,i));return arr;}
+function getWeekMenu(ws){if(!state.weeks[ws])state.weeks[ws]=[[],[],[],[],[],[],[]];return state.weeks[ws];}
+function getWeekShop(ws){if(!state.shop[ws])state.shop[ws]=[];return state.shop[ws];}
+function wkLabel(ws){const wd=weekDatesOf(ws);const tag=ws===weekStartStr()?"（本周）":ws===addDays(weekStartStr(),7)?"（下周）":ws===addDays(weekStartStr(),14)?"（下下周）":"";return wd[0].slice(5)+" ~ "+wd[6].slice(5)+tag;}
+
+/* 切换页 */
+function switchTab(t){
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===t));
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  $("page-"+t).classList.add("active");
+  if(t==="home")renderHome();
+  if(t==="recipes")renderRecipes();
+  if(t==="week")renderWeek();
+}
+
+/* ===== 首页 ===== */
+function renderHome(){
+  const wi=weekdayIdx();
+  const td=todayStr();
+  $("todayLabel").textContent=DAYS[wi]+" · "+td;
+  const list=$("todayList");list.innerHTML="";
+  const todays=getWeekMenu(weekStartStr())[wi]||[];
+  if(!todays.length){list.innerHTML='<div class="empty">今天还没排菜，去「周清单」安排一下～</div>';}
+  else{
+    todays.forEach(rid=>{
+      const r=recipeById(rid);if(!r)return;
+      const done=(state.checkins[td]||[]).includes(rid);
+      const d=document.createElement("div");d.className="dish"+(done?" done":"");
+      d.innerHTML='<div class="dn">'+esc(r.name)+'</div>'+
+        (r.cal?'<span class="chip">'+esc(r.cal)+' kcal</span>':'')+
+        '<div class="x" onclick="toggleDone(\''+td+'\',\''+rid+'\')">'+(done?"✓":"○")+'</div>';
+      list.appendChild(d);
+    });
+  }
+  // 速查
+  const q=($("homeSearch").value||"").trim().toLowerCase();
+  const res=$("homeResults");res.innerHTML="";
+  const matched=state.recipes.filter(r=>(r.name||"").toLowerCase().includes(q));
+  if(!matched.length){res.innerHTML='<div class="empty">'+(q?"没找到匹配的菜":"还没有菜谱，去「菜谱」加一道吧")+'</div>';}
+  else matched.forEach(r=>{
+    const c=document.createElement("div");c.className="recipe";
+    c.innerHTML='<div class="rh" onclick="jumpToRecipe(\''+r.id+'\')">'+
+        '<div style="flex:1;min-width:0"><div class="name">'+esc(r.name)+'</div>'+
+        '<div class="meta">'+
+        (r.time?'<span class="chip plain">⏱ '+esc(r.time)+'</span>':'')+
+        (r.diff?'<span class="chip plain">'+esc(r.diff)+'</span>':'')+
+        (r.cal?'<span class="chip">🔥 '+esc(r.cal)+' kcal</span>':'')+
+        '</div></div><div class="chev">›</div></div>';
+    c.style.marginBottom="10px";
+    res.appendChild(c);
+  });
+  // 概览（可翻周）
+  const wd=weekDatesOf(homeWeek);const ov=$("overview");ov.innerHTML="";
+  if($("homeWeekLabel"))$("homeWeekLabel").textContent=wkLabel(homeWeek);
+  const curWi=homeWeek===weekStartStr()?weekdayIdx():-1;
+  wd.forEach((ds2,i)=>{
+    const dishes=getWeekMenu(homeWeek)[i]||[];
+    const done=(state.checkins[ds2]||[]);
+    const cnt=dishes.length;
+    const doneCnt=dishes.filter(rid=>done.includes(rid)).length;
+    const cell=document.createElement("div");
+    cell.className="ovcell"+(i===curWi?" today":"");
+    cell.innerHTML='<div class="od">'+DAYS[i]+'</div><div class="oc">'+cnt+'道</div>'+
+      (cnt?'<div class="op">✓'+doneCnt+'</div>':'');
+    cell.onclick=()=>{viewWeek=homeWeek;switchTab("week");};
+    cell.style.cursor="pointer";
+    ov.appendChild(cell);
+  });
+  renderCalendar();
+}
+function toggleDone(date,rid){
+  state.checkins[date]=state.checkins[date]||[];
+  const a=state.checkins[date];const i=a.indexOf(rid);
+  if(i>=0)a.splice(i,1);else a.push(rid);
+  save();renderHome();
+}
+function homeWeekStep(n){homeWeek=weekStartStr(addDays(homeWeek,7*n));renderHome();}
+function renderCalendar(){
+  const grid=$("calendar");grid.innerHTML="";
+  if($("calTitle"))$("calTitle").textContent=calY+"年"+(calM+1)+"月";
+  ["一","二","三","四","五","六","日"].forEach(h=>{const c=document.createElement("div");c.className="ch";c.textContent=h;grid.appendChild(c);});
+  const start=new Date(calY,calM,1);start.setDate(start.getDate()-((start.getDay()+6)%7));
+  const tds=ds(new Date());
+  for(let i=0;i<42;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    const ds2=ds(d);
+    const cell=document.createElement("div");
+    cell.className="cd"+(ds2===tds?" today":"")+(d.getMonth()!==calM?" out":"");
+    const planned=(state.weeks[weekStartStr(ds2)]||[]).reduce((a,arr)=>a+(arr?arr.length:0),0);
+    cell.innerHTML='<div class="n">'+d.getDate()+'</div>'+(planned?'<div class="dot"></div>':'');
+    cell.onclick=()=>{viewWeek=weekStartStr(ds2);switchTab("week");};
+    grid.appendChild(cell);
+  }
+}
+function calStep(n){const d=new Date(calY,calM,1);d.setMonth(d.getMonth()+n);calY=d.getFullYear();calM=d.getMonth();renderCalendar();}
+function calToday(){const n=new Date();calY=n.getFullYear();calM=n.getMonth();renderCalendar();}
+
+/* ===== 菜谱 ===== */
+function renderRecipes(){
+  const q=($("recipeSearch").value||"").trim().toLowerCase();
+  const list=$("recipeList");list.innerHTML="";
+  const items=state.recipes.filter(r=>(r.name||"").toLowerCase().includes(q));
+  if(!items.length){list.innerHTML='<div class="empty">'+(q?"没找到匹配的菜":"还没有菜谱，点右上角「+加菜」开始记录")+'</div>';return;}
+  items.forEach(r=>{
+    const open=openRecipes.has(r.id);
+    const ingN=(r.ing||"").split(/\n+/).filter(Boolean).length;
+    const sum=(ingN?("食材 "+ingN+" 项"):"")+(r.steps?" · 有做法":"");
+    const c=document.createElement("div");c.className="recipe"+(open?" open":"");
+    c.innerHTML=
+      '<div class="rh" onclick="toggleRecipe(\''+r.id+'\')">'+
+        '<div style="flex:1;min-width:0">'+
+          '<div class="name">'+esc(r.name)+'</div>'+
+          '<div class="meta">'+
+            (r.time?'<span class="chip plain">⏱ '+esc(r.time)+'</span>':'')+
+            (r.diff?'<span class="chip plain">'+esc(r.diff)+'</span>':'')+
+            (r.cal?'<span class="chip">🔥 '+esc(r.cal)+' kcal</span>':'')+
+          '</div>'+
+          (sum?'<div class="sum">'+esc(sum)+'</div>':'')+
+        '</div>'+
+        '<div class="chev">'+(open?"▾":"▸")+'</div>'+
+      '</div>'+
+      (open?
+        '<div style="margin-top:10px">'+
+        (r.ing?'<div class="sec">食材</div><div class="body">'+esc(r.ing)+'</div>':'')+
+        (r.steps?'<div class="sec">做法</div><div class="body">'+esc(r.steps)+'</div>':'')+
+        '<div class="acts"><button class="btn sm line" onclick="openForm(\''+r.id+'\')">编辑</button>'+
+        '<button class="btn sm gray" onclick="delRecipe(\''+r.id+'\')">删除</button></div>'+
+        '</div>'
+      :'');
+    list.appendChild(c);
+  });
+}
+function toggleRecipe(id){if(openRecipes.has(id))openRecipes.delete(id);else openRecipes.add(id);renderRecipes();}
+function jumpToRecipe(id){switchTab("recipes");$("recipeSearch").value="";openRecipes.add(id);renderRecipes();}
+function openForm(id){
+  editingId=id||null;
+  $("formTitle").textContent=id?"编辑菜品":"加一道菜";
+  const r=id?recipeById(id):null;
+  $("f_name").value=r?r.name:"";
+  $("f_ing").value=r?r.ing:"";
+  $("f_steps").value=r?r.steps:"";
+  $("f_time").value=r?r.time:"";
+  $("f_diff").value=r?(r.diff||"简单"):"简单";
+  $("f_cal").value=r?r.cal:"";
+  $("mask").classList.add("show");
+  setTimeout(()=>$("f_name").focus(),50);
+}
+function closeForm(){$("mask").classList.remove("show");editingId=null;}
+function saveRecipe(){
+  const name=$("f_name").value.trim();
+  if(!name){toast("菜名不能为空");return;}
+  const data={
+    name:name,
+    ing:$("f_ing").value.trim(),
+    steps:$("f_steps").value.trim(),
+    time:$("f_time").value.trim(),
+    diff:$("f_diff").value,
+    cal:$("f_cal").value.trim()
+  };
+  if(editingId){
+    const r=recipeById(editingId);Object.assign(r,data);
+  }else{
+    data.id=uid();state.recipes.unshift(data);
+  }
+  save();closeForm();renderRecipes();
+  toast("已保存");
+}
+function delRecipe(id){
+  if(!confirm("确定删除这道菜？"))return;
+  state.recipes=state.recipes.filter(r=>r.id!==id);
+  Object.keys(state.weeks).forEach(ws=>{state.weeks[ws]=state.weeks[ws].map(arr=>arr.filter(x=>x!==id));});
+  if(!state.deleted.includes(id))state.deleted.push(id);
+  save();renderRecipes();renderWeek();renderHome();
+  toast("已删除");
+}
+
+/* ===== 周清单 ===== */
+function renderWeek(){
+  const plan=$("weekPlan");plan.innerHTML="";
+  $("weekLabel").textContent=wkLabel(viewWeek);
+  const wd=weekDatesOf(viewWeek);
+  const menu=getWeekMenu(viewWeek);
+  const curIsThisWeek=viewWeek===weekStartStr();
+  const todayIdx=curIsThisWeek?weekdayIdx():-1;
+  menu.forEach((arr,i)=>{
+    const day=document.createElement("div");day.className="day";
+    day.innerHTML='<div class="dh'+(i===todayIdx?" today":"")+'"><span class="dname">'+DAYS[i]+'</span><span class="dnum">'+wd[i]+'</span></div>';
+    if(!arr.length){const e=document.createElement("div");e.className="muted";e.style.fontSize="14px";e.textContent="（还没排）";day.appendChild(e);}
+    arr.forEach(rid=>{
+      const r=recipeById(rid);if(!r)return;
+      const d=document.createElement("div");d.className="dish";
+      d.innerHTML='<div class="dn">'+esc(r.name)+'</div><div class="x" onclick="rmDay('+i+',\''+rid+'\')">✕</div>';
+      day.appendChild(d);
+    });
+    const al=document.createElement("div");al.className="addline";
+    const sel=document.createElement("select");
+    sel.innerHTML='<option value="">+ 添加菜品…</option>'+state.recipes.map(r=>'<option value="'+r.id+'">'+esc(r.name)+'</option>').join("");
+    sel.onchange=()=>{if(sel.value){addDay(i,sel.value);sel.value="";}};
+    al.appendChild(sel);day.appendChild(al);
+    plan.appendChild(day);
+  });
+  renderShop();
+}
+function weekStep(n){viewWeek=weekStartStr(addDays(viewWeek,7*n));renderWeek();}
+function weekJump(k){viewWeek=weekStartStr(addDays(weekStartStr(),7*k));renderWeek();}
+function addDay(i,rid){const m=getWeekMenu(viewWeek);if(!m[i].includes(rid)){m[i].push(rid);save();renderWeek();renderHome();}}
+function rmDay(i,rid){const m=getWeekMenu(viewWeek);m[i]=m[i].filter(x=>x!==rid);save();renderWeek();renderHome();}
+
+/* 采购清单（按查看的周） */
+function ingList(){
+  const set=[];
+  getWeekMenu(viewWeek).forEach(arr=>arr.forEach(rid=>{
+    const r=recipeById(rid);if(!r||!r.ing)return;
+    r.ing.split(/[\n,，;；]+/).map(s=>s.trim()).filter(Boolean).forEach(s=>{if(!set.includes(s))set.push(s);});
+  }));
+  return set;
+}
+function regenShopping(){
+  const cur=ingList();
+  const shop=getWeekShop(viewWeek);
+  const manual=shop.filter(s=>!s.auto);
+  const next=manual.slice();
+  cur.forEach(txt=>{
+    const ex=shop.find(s=>s.auto&&s.text===txt);
+    next.push({id:uid(),text:txt,done:ex?ex.done:false,auto:true});
+  });
+  state.shop[viewWeek]=next;save();renderShop();toast("已据本周菜单生成 "+cur.length+" 项");
+}
+function addShopManual(){
+  const v=$("shopInput").value.trim();if(!v)return;
+  getWeekShop(viewWeek).push({id:uid(),text:v,done:false,auto:false});
+  $("shopInput").value="";save();renderShop();
+}
+function toggleShop(id){const s=getWeekShop(viewWeek).find(x=>x.id===id);if(s){s.done=!s.done;save();renderShop();}}
+function delShop(id){state.shop[viewWeek]=getWeekShop(viewWeek).filter(x=>x.id!==id);save();renderShop();}
+function renderShop(){
+  const box=$("shopList");box.innerHTML="";
+  const shop=getWeekShop(viewWeek);
+  if($("shopWeekTag"))$("shopWeekTag").textContent="自动汇总+手动增删 · "+wkLabel(viewWeek);
+  if(!shop.length){box.innerHTML='<div class="empty">清单为空。排好周菜单后点「据周菜单生成」，或手动添加。</div>';return;}
+  shop.forEach(s=>{
+    const row=document.createElement("div");row.className="shop"+(s.done?" done":"");
+    row.innerHTML='<div class="cb" onclick="toggleShop(\''+s.id+'\')">'+(s.done?"✓":"")+'</div>'+
+      '<div class="txt">'+esc(s.text)+'</div>'+
+      (s.auto?'<span class="auto">自动</span>':'')+
+      '<div class="x" onclick="delShop(\''+s.id+'\')">✕</div>';
+    box.appendChild(row);
+  });
+}
+
+/* ===== 云同步（GitHub 为共享数据源） ===== */
+const CKEY="chaochihao_cloud_v1";
+let cloud={owner:"",repo:"",branch:"main",path:"data.json",token:""};
+let _pushT=null,_pushing=false,_cloudTimer=null;
+function loadCloud(){try{const r=localStorage.getItem(CKEY);if(r){const c=JSON.parse(r);if(c&&typeof c==="object")cloud=Object.assign(cloud,c);}}catch(e){}}
+function saveCloudCfg(){localStorage.setItem(CKEY,JSON.stringify(cloud));}
+function cloudReady(){return !!(cloud.owner&&cloud.repo&&cloud.token);}
+function setCloudStat(txt,cls){const s=$("cloudStat");if(!s)return;s.textContent=txt;s.className="cloudstat"+(cls?" "+cls:"");}
+function rawUrl(){return "https://raw.githubusercontent.com/"+cloud.owner+"/"+cloud.repo+"/"+(cloud.branch||"main")+"/"+encodeURIComponent(cloud.path);}
+function apiUrl(){return "https://api.github.com/repos/"+cloud.owner+"/"+cloud.repo+"/contents/"+encodeURIComponent(cloud.path);}
+function b64enc(str){return btoa(unescape(encodeURIComponent(str)));}
+function cloudHeaders(){return {"Authorization":"Bearer "+cloud.token,"Content-Type":"application/json","Accept":"application/vnd.github+json"};}
+
+function mergeSeedsInto(obj){
+  obj.recipes=obj.recipes||[];obj.weeks=obj.weeks||{};obj.shop=obj.shop||{};obj.checkins=obj.checkins||{};obj.deleted=obj.deleted||[];
+  let ch=false;
+  SEED_RECIPES.forEach(s=>{
+    if(obj.deleted.includes(s.id))return;
+    if(!obj.recipes.find(r=>r.id===s.id)){obj.recipes.unshift({...s});ch=true;}
+  });
+  return ch;
+}
+
+async function pullCloud(){
+  if(!cloudReady())return {error:"未配置"};
+  try{
+    const res=await fetch(rawUrl(),{cache:"no-store"});
+    if(res.status===404)return {empty:true};
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    const obj=JSON.parse(await res.text());
+    return {data:obj};
+  }catch(e){return {error:e.message};}
+}
+async function pushCloud(){
+  if(!cloudReady())return {ok:false,reason:"未配置"};
+  let sha=null;
+  try{
+    const g=await fetch(apiUrl()+"?ref="+(cloud.branch||"main"),{headers:cloudHeaders()});
+    if(g.ok){const j=await g.json();sha=j.sha;}
+    else if(g.status!==404)throw new Error("读sha失败 "+g.status);
+  }catch(e){}
+  const body={message:"update workbench data",content:b64enc(JSON.stringify(state))};
+  if(sha)body.sha=sha;
+  try{
+    const res=await fetch(apiUrl(),{method:"PUT",headers:cloudHeaders(),body:JSON.stringify(body)});
+    if(!res.ok)throw new Error("推送失败 "+res.status);
+    return {ok:true};
+  }catch(e){return {ok:false,reason:e.message};}
+}
+function cloudPushDebounced(){
+  if(!cloudReady()||_pushing)return;
+  clearTimeout(_pushT);
+  _pushT=setTimeout(()=>{
+    if(_pushing)return;_pushing=true;
+    setCloudStat("同步中…","sync");
+    pushCloud().then(r=>{_pushing=false;setCloudStat(r.ok?"已同步 ✓":"同步失败",r.ok?"ok":"err");});
+  },800);
+}
+function applyCloudData(obj){
+  const fresh={recipes:[],weeks:{},shop:{},checkins:{},deleted:[]};
+  Object.assign(fresh,obj);
+  const ch=mergeSeedsInto(fresh);
+  state=fresh;
+  if(ch)pushCloud();
+  saveLocal();
+  renderAll();
+}
+function renderAll(){
+  const t=document.querySelector("nav.tabs button.active");
+  const tab=t?t.dataset.tab:"home";
+  if(tab==="home")renderHome();
+  else if(tab==="recipes")renderRecipes();
+  else renderWeek();
+}
+async function syncNow(){
+  if(!cloudReady()){openCloud();return;}
+  setCloudStat("同步中…","sync");
+  const p=await pullCloud();
+  if(p&&p.data){applyCloudData(p.data);setCloudStat("已同步 ✓","ok");toast("已拉取云端最新数据");}
+  else if(p&&p.empty){const r=await pushCloud();setCloudStat(r.ok?"已同步 ✓":"同步失败",r.ok?"ok":"err");toast(r.ok?"已创建云端数据":"创建失败");}
+  else{setCloudStat("离线/失败","err");toast("拉取失败："+(p&&p.error||"未知"));}
+}
+function startAutoPull(){
+  if(_cloudTimer)clearInterval(_cloudTimer);
+  _cloudTimer=setInterval(async()=>{
+    if(!cloudReady()||_pushing)return;
+    const p=await pullCloud();
+    if(p&&p.data){
+      if(JSON.stringify(state)!==JSON.stringify(p.data)){
+        applyCloudData(p.data);setCloudStat("已同步 ✓","ok");toast("云端有新数据，已更新");
+      }
+    }
+  },90000);
+}
+/* 云同步设置弹窗 */
+function openCloud(){loadCloudCfgUI();$("cloudMask").classList.add("show");}
+function closeCloud(){$("cloudMask").classList.remove("show");}
+function loadCloudCfgUI(){
+  $("c_repo").value=(cloud.owner&&cloud.repo)?(cloud.owner+"/"+cloud.repo):"";
+  $("c_branch").value=cloud.branch||"main";
+  $("c_path").value=cloud.path||"data.json";
+  $("c_token").value=cloud.token||"";
+}
+function saveCloud(){
+  const rp=$("c_repo").value.trim();
+  const m=rp.match(/^([^\/\s]+)\/([^\/\s]+)$/);
+  if(!m){toast("仓库格式应为 owner/repo");return;}
+  const tok=$("c_token").value.trim();
+  if(!tok){toast("请填写 Token");return;}
+  cloud.owner=m[1];cloud.repo=m[2];
+  cloud.branch=$("c_branch").value.trim()||"main";
+  cloud.path=$("c_path").value.trim()||"data.json";
+  cloud.token=tok;
+  saveCloudCfg();closeCloud();syncNow();startAutoPull();
+}
+
+/* 启动 */
+if(!viewWeek)viewWeek=weekStartStr();
+if(!homeWeek)homeWeek=weekStartStr();
+if(!calY){const n=new Date();calY=n.getFullYear();calM=n.getMonth();}
+loadCloud();
+load();
+renderHome();
+if(cloudReady()){
+  setCloudStat("连接云端…","sync");
+  pullCloud().then(p=>{
+    if(p&&p.data){applyCloudData(p.data);setCloudStat("已同步 ✓","ok");}
+    else if(p&&p.empty){pushCloud().then(r=>setCloudStat(r.ok?"已同步 ✓":"同步失败",r.ok?"ok":"err"));}
+    else{setCloudStat("离线","err");}
+  });
+  startAutoPull();
+}
+</script>
+</body>
+</html>
