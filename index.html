@@ -42,6 +42,7 @@
 .sidebar .brand{padding:14px 14px 12px;display:flex;align-items:center;gap:6px;font-size:18px;font-weight:700;letter-spacing:.5px;border-bottom:1px solid var(--line);}
 .sidebar .brand small{font-weight:400;color:var(--sub);font-size:12px;margin-left:3px;}
 .sidebar .nav{flex:1;padding:10px;display:flex;flex-direction:column;gap:4px;overflow:auto;}
+.navgroup{font-size:12px;color:var(--sub);padding:12px 12px 4px;font-weight:700;letter-spacing:1px;}
 .navitem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:none;background:transparent;color:var(--sub);padding:11px 12px;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;transition:.15s;}
 .navitem .ni{font-size:17px;width:22px;text-align:center;flex:none;}
 .navitem:active{transform:scale(.98);}
@@ -166,6 +167,21 @@ header.topm{position:sticky;top:0;z-index:30;background:var(--bg);padding:12px 1
   .imgprev{margin-top:6px;}
   .imgprev img{max-width:100%;max-height:170px;border-radius:10px;border:1px solid var(--line);display:block;}
   .imgprev .rm{font-size:13px;color:var(--accent);cursor:pointer;display:inline-block;margin-top:6px;}
+  .book{border:1px solid var(--line);border-radius:16px;background:var(--card);overflow:hidden;margin-bottom:12px;}
+  .book .bh{display:flex;gap:12px;padding:12px;cursor:pointer;align-items:center;}
+  .book .coverSm{width:44px;height:58px;border-radius:8px;background:var(--line);object-fit:cover;flex:none;}
+  .book .bname{font-weight:700;font-size:16px;}
+  .book .bauth{color:var(--sub);font-size:13px;margin-top:2px;}
+  .book .bstatus{font-size:12px;padding:3px 9px;border-radius:20px;background:var(--accent-soft);color:var(--accent);flex:none;}
+  .book .bopen{padding:4px 12px 14px;}
+  .book .coverBig{width:100px;height:132px;object-fit:cover;border-radius:10px;margin-bottom:8px;background:var(--line);}
+  .book .note{border-top:1px dashed var(--line);padding:10px 0;}
+  .book .note .q{font-style:italic;color:var(--text);}
+  .book .note .nt{margin-top:4px;white-space:pre-wrap;}
+  .book .note .meta{color:var(--sub);font-size:12px;margin-top:4px;}
+  .book .addnote{margin-top:10px;border-top:1px solid var(--line);padding-top:10px;}
+  .book .addnote textarea{width:100%;min-height:60px;margin-top:6px;}
+  .book .addnote input{width:100%;}
   /* sidebar responsive: drawer on mobile */
   @media(max-width:820px){
     .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s;z-index:40;box-shadow:var(--shadow);}
@@ -182,9 +198,12 @@ header.topm{position:sticky;top:0;z-index:30;background:var(--bg);padding:12px 1
     </div>
     <nav class="nav">
       <button class="navitem active" data-nav="home" onclick="switchNav('home')"><span class="ni">🏠</span>首页</button>
+      <div class="navgroup">美食</div>
       <button class="navitem" data-nav="recipes" onclick="switchNav('recipes')"><span class="ni">🍽️</span>菜谱</button>
       <button class="navitem" data-nav="week" onclick="switchNav('week')"><span class="ni">🗓️</span>周菜单</button>
       <button class="navitem" data-nav="shop" onclick="switchNav('shop')"><span class="ni">🛒</span>采购清单</button>
+      <div class="navgroup">读书笔记</div>
+      <button class="navitem" data-nav="books" onclick="switchNav('books')"><span class="ni">📚</span>读书笔记</button>
     </nav>
     <div class="sidefoot">
       <div id="cloudBar">
@@ -271,6 +290,23 @@ header.topm{position:sticky;top:0;z-index:30;background:var(--bg);padding:12px 1
           <div id="shopList"></div>
         </div>
       </section>
+
+      <!-- 读书笔记 -->
+      <section id="page-books" class="page">
+        <div class="searchbar">
+          <div class="row" style="align-items:center;">
+            <input id="bookSearch" placeholder="搜索书名 / 作者…" oninput="renderBooks()" style="flex:1;">
+            <select id="bookFilter" onchange="renderBooks()" style="width:auto;">
+              <option value="">全部</option>
+              <option value="想读">想读</option>
+              <option value="在读">在读</option>
+              <option value="读完">读完</option>
+            </select>
+            <button class="btn sm" onclick="openBookForm()">+ 加书</button>
+          </div>
+        </div>
+        <div id="bookList"></div>
+      </section>
     </div>
   </div>
 </div>
@@ -314,6 +350,30 @@ header.topm{position:sticky;top:0;z-index:30;background:var(--bg);padding:12px 1
   </div>
 </div>
 
+<!-- 读书笔记 表单弹窗 -->
+<div class="mask" id="bookMask" onclick="if(event.target===this)closeBookForm()">
+  <div class="modal">
+    <h3 id="bookFormTitle">加一本书</h3>
+    <label class="fld">书名 *</label>
+    <input id="b_title" placeholder="如：百年孤独">
+    <label class="fld">作者</label>
+    <input id="b_author" placeholder="如：加西亚·马尔克斯">
+    <label class="fld">阅读状态</label>
+    <select id="b_status">
+      <option value="想读">想读</option>
+      <option value="在读">在读</option>
+      <option value="读完">读完</option>
+    </select>
+    <label class="fld">封面图片</label>
+    <input id="b_img" type="file" accept="image/*" onchange="onBookImgPick(this)">
+    <div class="imgprev" id="bImgPrev"></div>
+    <div class="row" style="margin-top:16px;justify-content:flex-end;">
+      <button class="btn gray" onclick="closeBookForm()">取消</button>
+      <button class="btn" onclick="saveBook()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- 云同步设置弹窗 -->
 <div class="mask" id="cloudMask" onclick="if(event.target===this)closeCloud()">
   <div class="modal">
@@ -347,7 +407,7 @@ header.topm{position:sticky;top:0;z-index:30;background:var(--bg);padding:12px 1
 "use strict";
 const KEY="chaochihao_workbench_v1";
 const DAYS=["周一","周二","周三","周四","周五","周六","周日"];
-let state={recipes:[],weeks:{},shop:{},checkins:{},deleted:[]};
+let state={recipes:[],weeks:{},shop:{},checkins:{},deleted:[],books:[]};
 let editingId=null;
 let openRecipes=new Set();
 // 首次打开时自动写入的真实菜谱
@@ -368,7 +428,7 @@ const SEED_RECIPES=[
 
 function load(){
   const raw=localStorage.getItem(KEY);
-  state.weeks=state.weeks||{};state.shop=state.shop||{};
+  state.weeks=state.weeks||{};state.shop=state.shop||{};state.books=state.books||[];
   if(raw!==null){
     try{const s=JSON.parse(raw);if(s&&typeof s==="object"){
       state.recipes=s.recipes||[];
@@ -376,6 +436,7 @@ function load(){
       state.deleted=Array.isArray(s.deleted)?s.deleted:[];
       state.weeks=(s.weeks&&typeof s.weeks==="object")?s.weeks:{};
       state.shop=(s.shop&&typeof s.shop==="object")?s.shop:{};
+      state.books=Array.isArray(s.books)?s.books:[];
       // 迁移旧版（仅存本周）数据
       if(Array.isArray(s.week)&&s.week.length===7&&!Object.keys(state.weeks).length){
         state.weeks[weekStartStr()]=s.week;
@@ -430,11 +491,12 @@ function switchNav(t){
   document.querySelectorAll(".navitem[data-nav]").forEach(b=>b.classList.toggle("active",b.dataset.nav===t));
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   const pg=$("page-"+t);if(pg)pg.classList.add("active");
-  const ttl=$("pageTitle");if(ttl)ttl.textContent={home:"首页",recipes:"菜谱",week:"周菜单",shop:"采购清单"}[t]||"";
+  const ttl=$("pageTitle");if(ttl)ttl.textContent={home:"首页",recipes:"菜谱",week:"周菜单",shop:"采购清单",books:"读书笔记"}[t]||"";
   if(t==="home")renderHome();
   if(t==="recipes")renderRecipes();
   if(t==="week")renderWeek();
   if(t==="shop")renderShop();
+  if(t==="books")renderBooks();
   if(window.innerWidth<=820)toggleSidebar(false);
 }
 function toggleSidebar(force){
@@ -652,6 +714,130 @@ function compressImage(file,maxW,q){
 let onlyFav=false;
 function toggleFav(id){const r=recipeById(id);if(!r)return;r.fav=!r.fav;save();renderRecipes();}
 function toggleOnlyFav(){onlyFav=!onlyFav;renderRecipes();}
+/* ===== 读书笔记 ===== */
+let openBooks=new Set();
+let editingBook=null;
+let _bImgData=null,_bImgRemove=false;
+function bookById(id){return state.books.find(b=>b.id===id);}
+function statusTag(s){return s||"想读";}
+function renderBooks(){
+  const q=($("bookSearch").value||"").trim().toLowerCase();
+  const f=$("bookFilter")?$("bookFilter").value:"";
+  const list=$("bookList");list.innerHTML="";
+  const items=state.books.filter(b=>{
+    if(f && b.status!==f)return false;
+    if(!q)return true;
+    return ((b.title||"")+" "+(b.author||"")).toLowerCase().includes(q);
+  });
+  if(!items.length){list.innerHTML='<div class="empty">'+(q||f?"没找到匹配的书记":"还没有书记，点「+ 加书」开始记录")+'</div>';return;}
+  items.forEach(b=>{
+    const open=openBooks.has(b.id);
+    const c=document.createElement("div");c.className="book"+(open?" open":"");
+    c.innerHTML=
+      '<div class="bh" onclick="toggleBook(\''+b.id+'\')">'+
+        (b.cover?'<img class="coverSm" src="'+b.cover+'">':'<div class="coverSm"></div>')+
+        '<div style="flex:1;min-width:0">'+
+          '<div class="bname">'+esc(b.title)+'</div>'+
+          (b.author?'<div class="bauth">'+esc(b.author)+'</div>':'')+
+        '</div>'+
+        '<span class="bstatus">'+statusTag(b.status)+'</span>'+
+        '<div class="chev">'+(open?"▾":"▸")+'</div>'+
+      '</div>'+
+      (open?
+        '<div class="bopen">'+
+        (b.cover?'<img class="coverBig" src="'+b.cover+'">':'')+
+        '<div class="row" style="margin:6px 0;gap:8px;">'+
+          '<select id="bs_'+b.id+'" onchange="setBookStatus(\''+b.id+'\',this.value)" style="flex:1;">'+
+            '<option value="想读"'+(b.status==="想读"?" selected":"")+'>想读</option>'+
+            '<option value="在读"'+(b.status==="在读"?" selected":"")+'>在读</option>'+
+            '<option value="读完"'+(b.status==="读完"?" selected":"")+'>读完</option>'+
+          '</select>'+
+          '<button class="btn sm line" onclick="openBookForm(\''+b.id+'\')">编辑</button>'+
+          '<button class="btn sm gray" onclick="delBook(\''+b.id+'\')">删除</button>'+
+        '</div>'+
+        '<div class="sec" style="margin-top:4px;">读书笔记 / 摘抄</div>'+
+        (b.notes&&b.notes.length?('<div id="notes_'+b.id+'">'+b.notes.map(n=>noteHtml(b.id,n)).join("")+'</div>')
+          :'<div class="muted" style="font-size:13px;padding:4px 0;">还没有笔记</div>')+
+        '<div class="addnote">'+
+          '<input id="nq_'+b.id+'" placeholder="摘抄原文（可选）">'+
+          '<div class="row" style="margin:6px 0;">'+
+            '<input id="np_'+b.id+'" placeholder="页码（可选）" style="flex:1;">'+
+            '<button class="btn sm" onclick="addNote(\''+b.id+'\')">加笔记</button>'+
+          '</div>'+
+          '<textarea id="nn_'+b.id+'" placeholder="我的感想 / 笔记…"></textarea>'+
+        '</div>'+
+        '</div>'
+      :'');
+    list.appendChild(c);
+  });
+}
+function noteHtml(bid,n){
+  return '<div class="note">'+
+    (n.quote?'<div class="q">“'+esc(n.quote)+'”</div>':'')+
+    (n.note?'<div class="nt">'+esc(n.note)+'</div>':'')+
+    '<div class="meta">'+(n.page?'p.'+esc(n.page)+' · ':'')+'<span onclick="delNote(\''+bid+'\',\''+n.id+'\')" style="cursor:pointer;">删除</span></div>'+
+  '</div>';
+}
+function toggleBook(id){if(openBooks.has(id))openBooks.delete(id);else openBooks.add(id);renderBooks();}
+function openBookForm(id){
+  editingBook=id||null;
+  $("bookFormTitle").textContent=id?"编辑书记":"加一本书";
+  const b=id?bookById(id):null;
+  $("b_title").value=b?b.title:"";
+  $("b_author").value=b?b.author:"";
+  $("b_status").value=b?(b.status||"想读"):"想读";
+  _bImgData=null;_bImgRemove=false;showBookImgPrev();
+  $("bookMask").classList.add("show");
+  setTimeout(()=>$("b_title").focus(),50);
+}
+function closeBookForm(){$("bookMask").classList.remove("show");editingBook=null;}
+function onBookImgPick(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  compressImage(f,1000,0.82).then(d=>{_bImgData=d;_bImgRemove=false;showBookImgPrev();}).catch(()=>toast("图片读取失败"));
+}
+function showBookImgPrev(){
+  const box=$("bImgPrev");if(!box)return;
+  if(_bImgRemove){box.innerHTML="";return;}
+  const cur=editingBook?(bookById(editingBook)||{}).cover:"";
+  const src=_bImgData||cur;
+  box.innerHTML=src?'<img src="'+src+'"><div class="rm" onclick="removeBookImg()">移除图片</div>':"";
+}
+function removeBookImg(){_bImgData=null;_bImgRemove=true;const i=$("b_img");if(i)i.value="";showBookImgPrev();}
+function saveBook(){
+  const title=$("b_title").value.trim();
+  if(!title){toast("书名不能为空");return;}
+  let cover=editingBook?((bookById(editingBook)||{}).cover||""):"";
+  if(_bImgRemove)cover="";
+  else if(_bImgData)cover=_bImgData;
+  const data={title:title,author:$("b_author").value.trim(),status:$("b_status").value,cover:cover};
+  if(editingBook){const b=bookById(editingBook);Object.assign(b,data);}
+  else{data.id=uid();data.notes=[];state.books.unshift(data);}
+  save();closeBookForm();renderBooks();
+  toast("已保存");
+}
+function delBook(id){
+  if(!confirm("确定删除这本书及其笔记？"))return;
+  state.books=state.books.filter(b=>b.id!==id);
+  save();renderBooks();
+  toast("已删除");
+}
+function setBookStatus(id,s){const b=bookById(id);if(!b)return;b.status=s;save();renderBooks();}
+function addNote(bid){
+  const b=bookById(bid);if(!b)return;
+  const note=$("nn_"+bid).value.trim();
+  const quote=$("nq_"+bid).value.trim();
+  const page=$("np_"+bid).value.trim();
+  if(!note&&!quote){toast("写点什么吧");return;}
+  b.notes=b.notes||[];
+  b.notes.unshift({id:uid(),quote:quote,page:page,note:note});
+  save();renderBooks();
+  toast("已添加笔记");
+}
+function delNote(bid,nid){
+  const b=bookById(bid);if(!b)return;
+  b.notes=b.notes.filter(n=>n.id!==nid);
+  save();renderBooks();
+}
 function toggleTheme(){
   const d=document.documentElement;
   const dark=d.getAttribute("data-theme")==="dark";
@@ -752,7 +938,7 @@ function b64enc(str){return btoa(unescape(encodeURIComponent(str)));}
 function cloudHeaders(){return {"Authorization":"Bearer "+cloud.token,"Content-Type":"application/json","Accept":"application/vnd.github+json"};}
 
 function mergeSeedsInto(obj){
-  obj.recipes=obj.recipes||[];obj.weeks=obj.weeks||{};obj.shop=obj.shop||{};obj.checkins=obj.checkins||{};obj.deleted=obj.deleted||[];
+  obj.recipes=obj.recipes||[];obj.weeks=obj.weeks||{};obj.shop=obj.shop||{};obj.checkins=obj.checkins||{};obj.deleted=obj.deleted||[];obj.books=obj.books||[];
   let ch=false;
   SEED_RECIPES.forEach(s=>{
     if(obj.deleted.includes(s.id))return;
@@ -797,7 +983,7 @@ function cloudPushDebounced(){
   },800);
 }
 function applyCloudData(obj){
-  const fresh={recipes:[],weeks:{},shop:{},checkins:{},deleted:[]};
+  const fresh={recipes:[],weeks:{},shop:{},checkins:{},deleted:[],books:[]};
   Object.assign(fresh,obj);
   const ch=mergeSeedsInto(fresh);
   state=fresh;
@@ -811,6 +997,7 @@ function renderAll(){
   if(tab==="home")renderHome();
   else if(tab==="recipes")renderRecipes();
   else if(tab==="week")renderWeek();
+  else if(tab==="books")renderBooks();
   else renderShop();
 }
 async function syncNow(){
