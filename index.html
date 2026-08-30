@@ -16,6 +16,18 @@
     --ok:#3f9d5a;
     --shadow:0 1px 3px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.04);
   }
+  [data-theme="dark"]{
+    --bg:#17150f;--card:#26231d;--ink:#f2ede4;--sub:#a89e8f;--line:#3a342b;
+    --accent:#f0894a;--accent-soft:#3a2a1d;--ok:#62c081;
+    --shadow:0 1px 3px rgba(0,0,0,.45),0 6px 18px rgba(0,0,0,.35);
+  }
+  [data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select{background:#2f2a22;color:var(--ink);}
+  [data-theme="dark"] .btn.gray{background:#3a342b;color:#cdc4b5;}
+  [data-theme="dark"] .recipe,[data-theme="dark"] .day,[data-theme="dark"] .dish,[data-theme="dark"] .ovcell,[data-theme="dark"] .calgrid .cd,[data-theme="dark"] .modal{background:var(--card);}
+  [data-theme="dark"] .recipe .sum,[data-theme="dark"] .dish{background:#2f2a22;}
+  [data-theme="dark"] .day .dh.today,[data-theme="dark"] .ovcell.today{background:var(--accent-soft);}
+  [data-theme="dark"] .mask{background:rgba(0,0,0,.6);}
+  html{transition:background .25s;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
   body{
@@ -65,8 +77,15 @@
   #recipeList{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:start;}
   .recipe.open{grid-column:1 / -1;}
   #recipeList>.empty{grid-column:1 / -1;}
-  @media(max-width:380px){#recipeList{grid-template-columns:1fr;}}
+  @media(max-width:560px){#recipeList{grid-template-columns:1fr;}}
+  @media(max-width:560px){
+    .brand{font-size:17px;}
+    nav.tabs button{padding:11px 4px;font-size:14px;}
+    .gear{width:36px;height:32px;font-size:16px;}
+  }
   .recipe .name{font-size:17px;font-weight:700;}
+  .recipe .fav{font-size:21px;color:#e6b800;cursor:pointer;flex:none;user-select:none;line-height:1;padding:0 2px;}
+  .recipe .fav.off{color:var(--sub);opacity:.45;}
   .meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
   .chip{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 11px;font-size:13px;font-weight:600;}
   .chip.plain{background:#f0eee9;color:var(--sub);}
@@ -142,6 +161,7 @@
 <div class="wrap">
   <header class="top">
     <div class="brand">超好吃 <small>个人工作台</small>
+      <button class="gear" id="themeBtn" onclick="toggleTheme()" title="切换深色 / 浅色">🌙</button>
       <button class="gear" onclick="openCloud()" title="云同步设置">⚙</button>
     </div>
     <nav class="tabs">
@@ -188,7 +208,8 @@
   <section id="page-recipes" class="page">
     <div class="searchbar">
       <div class="row" style="align-items:center;">
-        <input id="recipeSearch" placeholder="搜索菜谱…" oninput="renderRecipes()" style="flex:1;">
+        <input id="recipeSearch" placeholder="搜索菜名 / 食材 / 做法…" oninput="renderRecipes()" style="flex:1;">
+        <button class="btn sm gray" id="favFilterBtn" onclick="toggleOnlyFav()">☆ 收藏</button>
         <button class="btn sm" onclick="openForm()">+ 加菜</button>
       </div>
     </div>
@@ -401,7 +422,11 @@ function renderHome(){
   // 速查
   const q=($("homeSearch").value||"").trim().toLowerCase();
   const res=$("homeResults");res.innerHTML="";
-  const matched=state.recipes.filter(r=>(r.name||"").toLowerCase().includes(q));
+  const matched=state.recipes.filter(r=>{
+    if(!q)return true;
+    const hay=(r.name+" "+(r.ing||"")+" "+(r.steps||"")).toLowerCase();
+    return hay.includes(q);
+  });
   if(!matched.length){res.innerHTML='<div class="empty">'+(q?"没找到匹配的菜":"还没有菜谱，去「菜谱」加一道吧")+'</div>';}
   else matched.forEach(r=>{
     const c=document.createElement("div");c.className="recipe";
@@ -465,8 +490,14 @@ function calToday(){const n=new Date();calY=n.getFullYear();calM=n.getMonth();re
 function renderRecipes(){
   const q=($("recipeSearch").value||"").trim().toLowerCase();
   const list=$("recipeList");list.innerHTML="";
-  const items=state.recipes.filter(r=>(r.name||"").toLowerCase().includes(q));
-  if(!items.length){list.innerHTML='<div class="empty">'+(q?"没找到匹配的菜":"还没有菜谱，点右上角「+加菜」开始记录")+'</div>';return;}
+  if($("favFilterBtn"))$("favFilterBtn").className="btn sm "+(onlyFav?"line":"gray");
+  const items=state.recipes.filter(r=>{
+    if(onlyFav && !r.fav)return false;
+    if(!q)return true;
+    const hay=(r.name+" "+(r.ing||"")+" "+(r.steps||"")).toLowerCase();
+    return hay.includes(q);
+  });
+  if(!items.length){list.innerHTML='<div class="empty">'+(q?"没找到匹配的菜":(onlyFav?"还没有收藏的菜":"还没有菜谱，点右上角「+加菜」开始记录"))+'</div>';return;}
   items.forEach(r=>{
     const open=openRecipes.has(r.id);
     const ingN=(r.ing||"").split(/\n+/).filter(Boolean).length;
@@ -483,6 +514,7 @@ function renderRecipes(){
           '</div>'+
           (sum?'<div class="sum">'+esc(sum)+'</div>':'')+
         '</div>'+
+        '<div class="fav'+(r.fav?"":" off")+'" onclick="event.stopPropagation();toggleFav(\''+r.id+'\')">'+(r.fav?"★":"☆")+'</div>'+
         '<div class="chev">'+(open?"▾":"▸")+'</div>'+
       '</div>'+
       (open?
@@ -538,6 +570,20 @@ function delRecipe(id){
   if(!state.deleted.includes(id))state.deleted.push(id);
   save();renderRecipes();renderWeek();renderHome();
   toast("已删除");
+}
+let onlyFav=false;
+function toggleFav(id){const r=recipeById(id);if(!r)return;r.fav=!r.fav;save();renderRecipes();}
+function toggleOnlyFav(){onlyFav=!onlyFav;renderRecipes();}
+function toggleTheme(){
+  const d=document.documentElement;
+  const dark=d.getAttribute("data-theme")==="dark";
+  d.setAttribute("data-theme",dark?"":"dark");
+  localStorage.setItem("chaochihao_theme",dark?"":"dark");
+  updateThemeBtn();
+}
+function updateThemeBtn(){
+  const b=$("themeBtn");if(!b)return;
+  b.textContent=document.documentElement.getAttribute("data-theme")==="dark"?"☀":"🌙";
 }
 
 /* ===== 周清单 ===== */
@@ -736,6 +782,12 @@ if(!homeWeek)homeWeek=weekStartStr();
 if(!calY){const n=new Date();calY=n.getFullYear();calM=n.getMonth();}
 loadCloud();
 load();
+(function(){
+  const _t=localStorage.getItem("chaochihao_theme");
+  const dark=_t==="dark"||(!_t&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);
+  if(dark)document.documentElement.setAttribute("data-theme","dark");
+  updateThemeBtn();
+})();
 renderHome();
 if(cloudReady()){
   setCloudStat("连接云端…","sync");
